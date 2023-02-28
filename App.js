@@ -33,17 +33,27 @@ export default function App() {
       //터치를 했을 때 PanResponder를 Active 해야 될까요?
       // Should we become active when user press down circle(View)?
       onStartShouldSetPanResponder: () => true,
+      //터치가 시작될 때
+      onPanResponderGrant: () => {
+        console.log("offset: ", POSITION.y._value);
+        POSITION.setOffset({
+          //POSITON.x -> 이건 숫자가 아니라 오브젝트임
+          //POSITION.x._value -> 이게 숫자임
+          x: POSITION.x._value,
+          y: POSITION.y._value,
+        });
+      },
+      //터치하며 움직일 때
       onPanResponderMove: (_, { dx, dy }) => {
+        console.log(dy);
         POSITION.setValue({
           x: dx,
           y: dy,
         });
       },
+      //터치가 끝났을 때
       onPanResponderRelease: () => {
-        Animated.spring(POSITION, {
-          toValue: { x: 0, y: 0 },
-          useNativeDriver: false,
-        }).start();
+        POSITION.flattenOffset();
       },
     })
   ).current;
