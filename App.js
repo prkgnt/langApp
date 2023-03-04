@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Animated, PanResponder, Text, View } from "react-native";
+import { Animated, PanResponder, View } from "react-native";
 import styled from "styled-components/native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import icons from "./icons";
@@ -39,19 +39,20 @@ export default function App() {
   const scale = useRef(new Animated.Value(1)).current;
   const position = useRef(new Animated.Value(0)).current;
   const rotate = position.interpolate({
-    inputRange: [-240, 0, 240],
+    inputRange: [-250, 0, 250],
     outputRange: ["-20deg", "0deg", "20deg"],
     //input 최대치에 도달했을 경우 output도 최대치로 고정
     extrapolate: "clamp",
   });
   const secondScale = position.interpolate({
-    inputRange: [-300, 0, 300],
+    inputRange: [-250, 0, 250],
     outputRange: [1, 0.7, 1],
     extrapolate: "clamp",
   });
   const opacity = position.interpolate({
-    inputRange: [-240, 0, 240],
+    inputRange: [-250, 0, 250],
     outputRange: [0.7, 1, 0.7],
+    extrapolate: "clamp",
   });
 
   const onPressIn = Animated.spring(scale, {
@@ -70,11 +71,16 @@ export default function App() {
     toValue: -500,
     tension: 5,
     useNativeDriver: true,
+    //애니메이션이 특정속도로 움직이거나 특정 위치가 되면 애니메이션 끝내기
+    restDisplacementThreshold: 200,
+    restSpeedThreshold: 200,
   });
   const goRight = Animated.spring(position, {
     toValue: 500,
     tension: 5,
     useNativeDriver: true,
+    restDisplacementThreshold: 200,
+    restSpeedThreshold: 200,
   });
 
   const panResponder = useRef(
@@ -84,10 +90,10 @@ export default function App() {
       onPanResponderMove: (_, { dx }) => {
         position.setValue(dx);
       },
-      onPanResponderRelease: (_, { dx }) => {
-        if (dx < -250) {
+      onPanResponderRelease: (_, { dx, vx }) => {
+        if (dx < -250 || vx < -2) {
           goLeft.start(dismiss);
-        } else if (dx > 250) {
+        } else if (dx > 250 || vx > 2) {
           goRight.start(dismiss);
         } else {
           //연속된 애니메이션 한번에 실행
@@ -106,8 +112,10 @@ export default function App() {
 
   const [index, setIndex] = useState(0);
   const dismiss = () => {
+    scale.setValue(1);
     position.setValue(0);
-    //setIndex((prev) => prev + 1);
+    //Animated.timing(position, { toValue: 0, useNativeDriver: true });
+    setIndex((prev) => prev + 1);
   };
 
   return (
@@ -119,8 +127,7 @@ export default function App() {
             transform: [{ scale: secondScale }],
           }}
         >
-          <Text>Back Card</Text>
-          {/*<Ionicons name={icons[index + 1]} color="#192a56" size={98} />*/}
+          <Ionicons name={icons[index + 1]} color="#192a56" size={98} />
         </AnimatedCard>
         <AnimatedCard
           {...panResponder.panHandlers}
@@ -133,8 +140,7 @@ export default function App() {
             opacity,
           }}
         >
-          <Text>Front Card</Text>
-          {/*<Ionicons name={icons[index]} color="#192a56" size={98} />*/}
+          <Ionicons name={icons[index]} color="#192a56" size={98} />
         </AnimatedCard>
       </CardContainer>
       <BtnContainer>
